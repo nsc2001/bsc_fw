@@ -46,8 +46,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - SOC");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - SOC");
+        ret = false;
+      }
     }
   }
 
@@ -61,8 +64,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
+        ret = false;
+      }
     }
   }
 
@@ -76,8 +82,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - current");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - current");
+        ret = false;
+      }
     }
   }
 
@@ -91,8 +100,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - power");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - power");
+        ret = false;
+      }
     }
   }
 
@@ -106,8 +118,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
+        ret = false;
+      }
     }
   }
 
@@ -121,8 +136,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
+        ret = false;
+      }
     }
   }
 
@@ -136,8 +154,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
+        ret = false;
+      }
     }
   }
 
@@ -151,8 +172,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
+        ret = false;
+      }
     }
   }
 
@@ -166,8 +190,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
+        ret = false;
+      }
     }
   }
 
@@ -181,8 +208,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
+        ret = false;
+      }
     }
   }
 
@@ -196,8 +226,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
+        ret = false;
+      }
     }
   }
 
@@ -211,8 +244,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
+        ret = false;
+      }
     }
   }
 
@@ -226,8 +262,11 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
-      ret = false;
+      if(i>=2)
+      {
+        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
+        ret = false;
+      }
     }
   }
 
@@ -308,7 +347,9 @@ static bool recvAnswer(uint8_t *p_lRecvBytes)
     // wenn innerhalb von 50ms das Telegram noch nicht begonnen hat, dann Timeout
     if( ((millis()-u32_lStartTime)>50) )
     {
-      BSC_LOGE(TAG,"Timeout: Serial=%i, u8_lRecvDataLen=%i, u8_lRecvBytesCnt=%i", u8_mDevNr, u8_lRecvDataLen, u8_lRecvBytesCnt);
+      #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGI(TAG,"Timeout: Serial=%i, u8_lRecvDataLen=%i, u8_lRecvBytesCnt=%i", u8_mDevNr, u8_lRecvDataLen, u8_lRecvBytesCnt);
+      #endif
       return false;
     }
 
