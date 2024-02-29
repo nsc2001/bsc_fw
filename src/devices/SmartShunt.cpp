@@ -36,98 +36,199 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   uint8_t response[SMARTSHUNT_MAX_ANSWER_LEN];
   deviceUtils::DeviceUtils devUtils;
 
-  getDataFromBms(devUtils, smartshunt_id_SOC);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - SOC");
-    ret = false;
+    getDataFromBms(devUtils, smartshunt_id_SOC);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - SOC");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_main_voltage);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Main Voltage");
-    ret = false;
+    getDataFromBms(devUtils, smartshunt_id_main_voltage);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_current);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - current");
-    ret = false;
+    getDataFromBms(devUtils, smartshunt_id_current);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - current");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_power);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - power");
+    getDataFromBms(devUtils, smartshunt_id_power);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - power");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_TIME_TO_GO);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Time to Go");
+    getDataFromBms(devUtils, smartshunt_id_TIME_TO_GO);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_CYCLE);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Cycle");
+    getDataFromBms(devUtils, smartshunt_id_CYCLE);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MIN);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Total Voltage Minimum");
+    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MIN);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Total Voltage Maximum");
+    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_TIME_SINCE_FULL);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Time Since Full");
+    getDataFromBms(devUtils, smartshunt_id_TIME_SINCE_FULL);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_VOLT_MIN_COUNT);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Alarm Voltage min Count");
+    getDataFromBms(devUtils, smartshunt_id_VOLT_MIN_COUNT);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX_COUNT);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Alarm Voltage max Count");
+    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX_COUNT);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_AMOUNT_DCH_ENERGY);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Summe Energie entladen");
+    getDataFromBms(devUtils, smartshunt_id_AMOUNT_DCH_ENERGY);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
+      ret = false;
+    }
   }
 
-  getDataFromBms(devUtils, smartshunt_id_AMOUNT_CH_ENERGY);
-  if(recvAnswer(response)) parseMessage(devUtils, response);
-  else
+  for(uint8_t i=0;i<3;i++)
   {
-    BSC_LOGE(TAG,"Checksum nicht OK - Summe Energie geladen");
+    getDataFromBms(devUtils, smartshunt_id_AMOUNT_CH_ENERGY);
+    if(recvAnswer(response))
+    {
+      parseMessage(devUtils, response);
+      break;
+    }
+    else
+    {
+      if(i>=2)BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
+      ret = false;
+    }
   }
 
   if(devNr>=2) callbackSetTxRxEn(u8_mDevNr,serialRxTx_RxTxDisable);
@@ -137,9 +238,6 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
 
 static void getDataFromBms(deviceUtils::DeviceUtils &devUtils, uint16_t ID_Get)
 {
-  // Kleine Pause zwischen den einzelnen Abfragen
-  vTaskDelay(pdMS_TO_TICKS(3));
-
   uint8_t u8_lData[11];
   uint8_t u8_lSendData[20];
   uint8_t chksum;
@@ -207,8 +305,8 @@ static bool recvAnswer(uint8_t *p_lRecvBytes)
   for(;;)
   {
     //Timeout
-    // wenn innerhalb von 500ms das Telegram noch nicht begonnen hat, dann Timeout
-    if( ((millis()-u32_lStartTime)>500) )
+    // wenn innerhalb von 50ms das Telegram noch nicht begonnen hat, dann Timeout
+    if( ((millis()-u32_lStartTime)>50) )
     {
       BSC_LOGE(TAG,"Timeout: Serial=%i, u8_lRecvDataLen=%i, u8_lRecvBytesCnt=%i", u8_mDevNr, u8_lRecvDataLen, u8_lRecvBytesCnt);
       return false;
@@ -423,5 +521,6 @@ static bool hexIsValid(const uint8_t* buffer, int size)
   #ifdef SMARTSHUNT_DEBUG
     BSC_LOGI(TAG,"Checksum =%u",checksum);
   #endif
+  if(!(checksum==0)) BSC_LOGE(TAG,"Checksum =%u",checksum);
   return (checksum==0);
 }
