@@ -46,6 +46,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - SOC - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - SOC");
@@ -64,6 +65,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
@@ -82,6 +84,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - current - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - current");
@@ -100,6 +103,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - power - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - power");
@@ -118,6 +122,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Time to Go - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
@@ -136,6 +141,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Cycle - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
@@ -154,6 +160,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
@@ -172,6 +179,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
@@ -190,6 +198,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
@@ -208,6 +217,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
@@ -226,6 +236,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
@@ -244,6 +255,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
@@ -262,6 +274,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen - Versuch Nr. :%i",i);
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
