@@ -23,6 +23,8 @@ enum SM_readData {SEARCH_START, SEARCH_END};
 static void (*callbackSetTxRxEn)(uint8_t, uint8_t) = NULL;
 static serialDevData_s *mDevData;
 
+static uint8_t u8_DataPointer;
+
 //https://www.victronenergy.com/live/vedirect_protocol:faq
 
 
@@ -46,7 +48,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - SOC - Versuch Nr. :%i",i);
+      #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - SOC");
@@ -65,7 +69,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage - Versuch Nr. :%i",i);
+      #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
@@ -84,7 +90,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - current - Versuch Nr. :%i",i);
+      #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - current");
@@ -103,7 +111,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
+      #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - power - Versuch Nr. :%i",i);
+      #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - power");
@@ -112,176 +122,224 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==1)
   {
-    getDataFromBms(devUtils, smartshunt_id_TIME_TO_GO);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Time to Go - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_TIME_TO_GO);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Time to Go - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==2)
   {
-    getDataFromBms(devUtils, smartshunt_id_CYCLE);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Cycle - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_CYCLE);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Cycle - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==3)
   {
-    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MIN);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MIN);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==4)
   {
-    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==5)
   {
-    getDataFromBms(devUtils, smartshunt_id_TIME_SINCE_FULL);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_TIME_SINCE_FULL);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==6)
   {
-    getDataFromBms(devUtils, smartshunt_id_VOLT_MIN_COUNT);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_VOLT_MIN_COUNT);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==7)
   {
-    getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX_COUNT);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX_COUNT);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==8)
   {
-    getDataFromBms(devUtils, smartshunt_id_AMOUNT_DCH_ENERGY);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_AMOUNT_DCH_ENERGY);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
+          ret = false;
+        }
       }
     }
   }
 
-  for(uint8_t i=0;i<3;i++)
+  if(u8_DataPointer==9)
   {
-    getDataFromBms(devUtils, smartshunt_id_AMOUNT_CH_ENERGY);
-    if(recvAnswer(response))
+    for(uint8_t i=0;i<3;i++)
     {
-      parseMessage(devUtils, response);
-      break;
-    }
-    else
-    {
-      BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen - Versuch Nr. :%i",i);
-      if(i>=2)
+      getDataFromBms(devUtils, smartshunt_id_AMOUNT_CH_ENERGY);
+      if(recvAnswer(response))
       {
-        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
-        ret = false;
+        parseMessage(devUtils, response);
+        break;
+      }
+      else
+      {
+        #ifdef SMARTSHUNT_DEBUG
+        BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen - Versuch Nr. :%i",i);
+        #endif
+        if(i>=2)
+        {
+          BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
+          ret = false;
+        }
       }
     }
   }
+
+  u8_DataPointer+=1;
+  if(u8_DataPointer>10)u8_DataPointer=0;
 
   if(devNr>=2) callbackSetTxRxEn(u8_mDevNr,serialRxTx_RxTxDisable);
   return ret;
