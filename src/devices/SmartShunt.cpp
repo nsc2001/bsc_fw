@@ -13,10 +13,10 @@
 static const char *TAG = "SMARTSHUNT";
 static Stream *mPort;
 static uint8_t u8_mDevNr;
-static void      getDataFromBms(deviceUtils::DeviceUtils &devUtils, uint16_t ID_Get);
-static bool      recvAnswer(uint8_t * t_outMessage);
-static void      parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message);
-static bool      hexIsValid(const uint8_t* buffer, int size);
+static void getDataFromBms(deviceUtils::DeviceUtils &devUtils, BscSerial *bscSerial, uint16_t ID_Get);
+static bool recvAnswer(uint8_t * t_outMessage);
+static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message);
+static bool hexIsValid(const uint8_t* buffer, int size);
 static uint8_t mDataMappingNr;
 
 enum SM_readData {SEARCH_START, SEARCH_END};
@@ -28,19 +28,18 @@ static uint8_t u8_DataPointer;
 //https://www.victronenergy.com/live/vedirect_protocol:faq
 
 
-bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_t, uint8_t), serialDevData_s *devData)
+bool SmartShunt_readBmsData(BscSerial *bscSerial, Stream *port, uint8_t devNr, serialDevData_s *devData)
 {
   bool ret = true;
   mDevData = devData;
   mPort = port;
   u8_mDevNr = devNr;
-  callbackSetTxRxEn=callback;
   uint8_t response[SMARTSHUNT_MAX_ANSWER_LEN];
   deviceUtils::DeviceUtils devUtils;
 
   for(uint8_t i=0;i<3;i++)
   {
-    getDataFromBms(devUtils, smartshunt_id_SOC);
+    getDataFromBms(devUtils, bscSerial, smartshunt_id_SOC);
     if(recvAnswer(response))
     {
       parseMessage(devUtils, response);
@@ -48,9 +47,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      #ifdef SMARTSHUNT_DEBUG
+      // #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - SOC - Versuch Nr. :%i",i);
-      #endif
+      // #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - SOC");
@@ -61,7 +60,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
 
   for(uint8_t i=0;i<3;i++)
   {
-    getDataFromBms(devUtils, smartshunt_id_main_voltage);
+    getDataFromBms(devUtils, bscSerial,  smartshunt_id_main_voltage);
     if(recvAnswer(response))
     {
       parseMessage(devUtils, response);
@@ -69,9 +68,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      #ifdef SMARTSHUNT_DEBUG
+      // #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage - Versuch Nr. :%i",i);
-      #endif
+      // #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - Main Voltage");
@@ -82,7 +81,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
 
   for(uint8_t i=0;i<3;i++)
   {
-    getDataFromBms(devUtils, smartshunt_id_current);
+    getDataFromBms(devUtils, bscSerial,  smartshunt_id_current);
     if(recvAnswer(response))
     {
       parseMessage(devUtils, response);
@@ -90,9 +89,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      #ifdef SMARTSHUNT_DEBUG
+      // #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - current - Versuch Nr. :%i",i);
-      #endif
+      // #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - current");
@@ -103,7 +102,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
 
   for(uint8_t i=0;i<3;i++)
   {
-    getDataFromBms(devUtils, smartshunt_id_power);
+    getDataFromBms(devUtils, bscSerial,  smartshunt_id_power);
     if(recvAnswer(response))
     {
       parseMessage(devUtils, response);
@@ -111,9 +110,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
     }
     else
     {
-      #ifdef SMARTSHUNT_DEBUG
+      // #ifdef SMARTSHUNT_DEBUG
       BSC_LOGE(TAG,"Antwort nicht OK - power - Versuch Nr. :%i",i);
-      #endif
+      // #endif
       if(i>=2)
       {
         BSC_LOGE(TAG,"Antwort nicht OK - power");
@@ -126,7 +125,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_TIME_TO_GO);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_TIME_TO_GO);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -134,9 +133,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Time to Go - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Time to Go");
@@ -150,7 +149,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_CYCLE);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_CYCLE);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -158,9 +157,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Cycle - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Cycle");
@@ -174,7 +173,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MIN);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_TOTAL_VOLT_MIN);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -182,9 +181,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Minimum");
@@ -198,7 +197,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_TOTAL_VOLT_MAX);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -206,9 +205,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Total Voltage Maximum");
@@ -222,7 +221,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_TIME_SINCE_FULL);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_TIME_SINCE_FULL);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -230,9 +229,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Time Since Full");
@@ -246,7 +245,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_VOLT_MIN_COUNT);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_VOLT_MIN_COUNT);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -254,9 +253,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage min Count");
@@ -270,7 +269,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_TOTAL_VOLT_MAX_COUNT);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_TOTAL_VOLT_MAX_COUNT);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -278,9 +277,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Alarm Voltage max Count");
@@ -294,7 +293,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_AMOUNT_DCH_ENERGY);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_AMOUNT_DCH_ENERGY);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -302,9 +301,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie entladen");
@@ -318,7 +317,7 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   {
     for(uint8_t i=0;i<3;i++)
     {
-      getDataFromBms(devUtils, smartshunt_id_AMOUNT_CH_ENERGY);
+      getDataFromBms(devUtils, bscSerial,  smartshunt_id_AMOUNT_CH_ENERGY);
       if(recvAnswer(response))
       {
         parseMessage(devUtils, response);
@@ -326,9 +325,9 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
       }
       else
       {
-        #ifdef SMARTSHUNT_DEBUG
+        // #ifdef SMARTSHUNT_DEBUG
         BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen - Versuch Nr. :%i",i);
-        #endif
+        // #endif
         if(i>=2)
         {
           BSC_LOGE(TAG,"Antwort nicht OK - Summe Energie geladen");
@@ -341,12 +340,10 @@ bool SmartShunt_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_
   u8_DataPointer+=1;
   if(u8_DataPointer>10)u8_DataPointer=0;
 
-  if(devNr>=2) callbackSetTxRxEn(u8_mDevNr,serialRxTx_RxTxDisable);
   return ret;
 }
 
-
-static void getDataFromBms(deviceUtils::DeviceUtils &devUtils, uint16_t ID_Get)
+static void getDataFromBms(deviceUtils::DeviceUtils &devUtils, BscSerial *bscSerial, uint16_t ID_Get)
 {
   uint8_t u8_lData[11];
   uint8_t u8_lSendData[20];
@@ -383,20 +380,8 @@ static void getDataFromBms(deviceUtils::DeviceUtils &devUtils, uint16_t ID_Get)
     BSC_LOGI(TAG,"ENDE SendBytes=%i: %s",u8_logByteCount, sendBytes.c_str());
   #endif
 
-  /* RX Buffer leeren
-   * Ist dies notwendig? */
-  for (unsigned long clearRxBufTime = millis(); millis()-clearRxBufTime<100;)
-  {
-    if(mPort->available()) mPort->read();
-    else break;
-  }
-
   //TX
-  callbackSetTxRxEn(u8_mDevNr,serialRxTx_TxEn);
-  usleep(20);
-  mPort->write(u8_lSendData, 11);
-  mPort->flush();
-  callbackSetTxRxEn(u8_mDevNr,serialRxTx_RxEn);
+  bscSerial->sendSerialData(mPort, u8_mDevNr, u8_lSendData, 11);
 
 }
 
@@ -416,7 +401,7 @@ static bool recvAnswer(uint8_t *p_lRecvBytes)
   {
     //Timeout
     // wenn innerhalb von 50ms das Telegram noch nicht begonnen hat, dann Timeout
-    if( ((millis()-u32_lStartTime)>50) )
+    if( ((millis()-u32_lStartTime)>500) )
     {
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Timeout: Serial=%i, u8_lRecvDataLen=%i, u8_lRecvBytesCnt=%i", u8_mDevNr, u8_lRecvDataLen, u8_lRecvBytesCnt);
@@ -599,7 +584,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_AMOUNT_DCH_ENERGY)
     {
       float floatValue = (float)devUtils.AsciiHexToU32(t_message,7) / 100; // 1 0,01kWh
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MMQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_AMOUNT_DCH_ENERGY, -1, floatValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_AMOUNT_DCH_ENERGY, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Amount of discharged energy =%f",floatValue);
       #endif
