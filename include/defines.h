@@ -42,6 +42,7 @@ extern TaskHandle_t task_handle_bscSerial;
 //#define JK_BT_DEBUG
 //#define SEPLOS_DEBUG
 //#define SYLCIN_DEBUG
+//#define SMARTSHUNT_DEBUG
 //#define NEEY_DEBUG
 //#define NEEY_WRITE_DATA_DEBUG
 //#define DALY_DEBUG
@@ -65,6 +66,7 @@ extern TaskHandle_t task_handle_bscSerial;
 //#define JK_BT_DEBUG
 //#define SEPLOS_DEBUG
 //#define SYLCIN_DEBUG
+#define SMARTSHUNT_DEBUG
 //#define NEEY_DEBUG
 //#define NEEY_WRITE_DATA_DEBUG
 //#define DALY_DEBUG
