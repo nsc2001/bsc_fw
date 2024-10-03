@@ -32,17 +32,16 @@ SemaphoreHandle_t mutexI2cRx = NULL;
 void isI2CdeviceConn();
 void displaySendData_bms(Inverter &inverter);
 void i2cSendData(Inverter &inverter, uint8_t i2cAdr, uint8_t data1, uint8_t data2, uint8_t data3, const void *dataAdr, uint8_t dataLen);
-void getBscSlaveData(uint8_t u8_slaveNr);
-void i2cSendDataToMaster();
+//void getBscSlaveData(uint8_t u8_slaveNr);
+//void i2cSendDataToMaster();
 void i2cInitExtSerial();
-void i2cExtSerialSetEnable(uint8_t u8_serialDevNr, serialRxTxEn_e serialRxTxEn);
 
 /*
  * Slave
  */
 void onRequest()
 {
-  i2cSendDataToMaster();
+  //i2cSendDataToMaster();
 }
 
 
@@ -60,14 +59,16 @@ void onReceive(int len)
 }
 
 
+/*
+ * Beim Nutzen der Funktion das mutexI2cRx nicht vergessen!
+ */
 void i2cWriteRegister(uint8_t u8_i2cDevAdr, uint8_t u8_reg, uint8_t u8_data)
 {
-  xSemaphoreTake(mutexI2cRx, portMAX_DELAY);
+  //xSemaphoreTake(mutexI2cRx, portMAX_DELAY);
   Wire.beginTransmission(u8_i2cDevAdr);
   Wire.write(u8_reg);
   Wire.write(u8_data);
   Wire.endTransmission();
-  xSemaphoreGive(mutexI2cRx);
 }
 
 
@@ -103,6 +104,7 @@ void i2cInit()
     }
   }*/
 }
+
 
 void isI2CdeviceConn()
 {
@@ -183,10 +185,10 @@ void i2cCyclicRun(Inverter &inverter)
     }
 
     //Slaves
-    for(uint8_t i=0; i<I2C_CNT_SLAVES; i++)
+    /*for(uint8_t i=0; i<I2C_CNT_SLAVES; i++)
     {
       if(bo_mSlaveEnabled[i]) getBscSlaveData(i);
-    }
+    }*/
   }
 }
 
@@ -229,6 +231,7 @@ void i2cSendData(Inverter &inverter, uint8_t i2cAdr, uint8_t data1, uint8_t data
 }
 
 
+#if 0
 //Anfordern der Daten vom Slave
 void getBscSlaveData(uint8_t u8_slaveNr)
 {
@@ -323,12 +326,13 @@ void getBscSlaveData(uint8_t u8_slaveNr)
     }
   }
 }
-
+#endif
 
 
 /******************************************************
  * Slave
  ******************************************************/
+#if 0
 void i2cSendDataToMaster()
 {
   Wire.write(u8_mI2cRxBuf[1]);
@@ -393,7 +397,7 @@ void i2cSendDataToMaster()
     }
   }
 }
-
+#endif
 
 
 /******************************************************
@@ -483,6 +487,8 @@ void i2cInitExtSerial()
 }
 
 //serialRxTxEn_e {serialRxTx_RxTxDisable, serialRxTx_TxEn, serialRxTx_RxEn};
+
+
 void i2cExtSerialSetEnable(uint8_t u8_serialDevNr, serialRxTxEn_e serialRxTxEn)
 {
   uint8_t valueA=0;
@@ -490,6 +496,7 @@ void i2cExtSerialSetEnable(uint8_t u8_serialDevNr, serialRxTxEn_e serialRxTxEn)
   const char TX_EN = 0x00;
   const char RX_EN = 0x03;
   const char TXRX_DIS = 0x02;
+  static bool semaphoreState = false;
 
   for(uint8_t i=0;i<8;i++)
   {
@@ -497,24 +504,40 @@ void i2cExtSerialSetEnable(uint8_t u8_serialDevNr, serialRxTxEn_e serialRxTxEn)
     {
       if(u8_serialDevNr<4)
       {
-        if(serialRxTxEn==serialRxTx_TxEn) valueA|=(RX_EN<<(u8_serialDevNr*2));
-        else if(serialRxTxEn==serialRxTx_RxEn) valueA|=(TX_EN<<(u8_serialDevNr*2));
-        else if(serialRxTxEn==serialRxTx_RxTxDisable) valueA|=(TXRX_DIS<<(u8_serialDevNr*2));
+        if(serialRxTxEn == serialRxTx_TxEn) valueA |= (RX_EN << (u8_serialDevNr*2));
+        else if(serialRxTxEn == serialRxTx_RxEn) valueA |= (TX_EN << (u8_serialDevNr*2));
+        else if(serialRxTxEn == serialRxTx_RxTxDisable) valueA |= (TXRX_DIS << (u8_serialDevNr*2));
       }
       else
       {
-        if(serialRxTxEn==serialRxTx_TxEn) valueB|=(RX_EN<<((u8_serialDevNr-4)*2));
-        else if(serialRxTxEn==serialRxTx_RxEn) valueB|=(TX_EN<<((u8_serialDevNr-4)*2));
-        else if(serialRxTxEn==serialRxTx_RxTxDisable) valueB|=(TXRX_DIS<<((u8_serialDevNr-4)*2));
+        if(serialRxTxEn == serialRxTx_TxEn) valueB |= (RX_EN << ((u8_serialDevNr-4)*2));
+        else if(serialRxTxEn == serialRxTx_RxEn) valueB |= (TX_EN << ((u8_serialDevNr-4)*2));
+        else if(serialRxTxEn == serialRxTx_RxTxDisable) valueB |= (TXRX_DIS << ((u8_serialDevNr-4)*2));
       }
     }
     else
     {
-      if(i<4) valueA|=(TXRX_DIS<<(i*2));
-      else valueB|=(TXRX_DIS<<((i-4)*2));
+      if(i < 4) valueA |= (TXRX_DIS << (i*2));
+      else valueB |= (TXRX_DIS << ((i-4)*2));
     }
+  }
+
+
+  // Mögliche States
+  // enum serialRxTxEn_e {serialRxTx_RxTxDisable, serialRxTx_TxEn, serialRxTx_RxEn};
+
+  if(semaphoreState == false)
+  {
+    xSemaphoreTake(mutexI2cRx, portMAX_DELAY);
+    semaphoreState = true;
   }
 
   i2cWriteRegister(I2C_DEV_ADDR_SERIAL_EXTENSION, MCP23017_GPIOA, valueA);
   i2cWriteRegister(I2C_DEV_ADDR_SERIAL_EXTENSION, MCP23017_GPIOB, valueB);
+
+  if(serialRxTxEn != serialRxTx_TxEn)
+  {
+    xSemaphoreGive(mutexI2cRx);
+    semaphoreState = false;
+  }
 }

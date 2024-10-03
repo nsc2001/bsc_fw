@@ -17,10 +17,10 @@ static void      getDataFromBms(deviceUtils::DeviceUtils &devUtils, uint16_t ID_
 static bool      recvAnswer(uint8_t * t_outMessage);
 static void      parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message);
 static bool      hexIsValid(const uint8_t* buffer, int size);
+static uint8_t mDataMappingNr;
 
 enum SM_readData {SEARCH_START, SEARCH_END};
 
-static void (*callbackSetTxRxEn)(uint8_t, uint8_t) = NULL;
 static serialDevData_s *mDevData;
 
 static uint8_t u8_DataPointer;
@@ -501,8 +501,8 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     if(Smartshunt_ID==smartshunt_id_main_voltage)
     {
       float floatValue = (float)(static_cast<int16_t>(devUtils.AsciiHexToU16(t_message,7))) / 100; // 0,01V
-      setBmsTotalVoltage(BT_DEVICES_COUNT+u8_mDevNr, floatValue);
-      mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_VOLTAGE, -1, floatValue);
+      setBmsTotalVoltage(mDataMappingNr, floatValue);
+      mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_VOLTAGE, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Voltage =%f",floatValue);
       #endif
@@ -510,8 +510,8 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_current)
     {
       float floatValue = (float)(static_cast<int16_t>(devUtils.AsciiHexToU16(t_message,7))) / 10; // 0,1A
-      setBmsTotalCurrent(BT_DEVICES_COUNT+u8_mDevNr, floatValue);
-      mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_CURRENT, -1, floatValue);
+      setBmsTotalCurrent(mDataMappingNr, floatValue);
+      mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_CURRENT, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Current =%f",floatValue);
       #endif
@@ -519,7 +519,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_power)
     {
       int16_t i16_tValue = (int16_t)devUtils.AsciiHexToU16(t_message,7); // W
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_POWER, -1, i16_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_POWER, -1, i16_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Power =%i",i16_tValue);
       #endif
@@ -527,7 +527,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_SOC)
     {
       float floatValue = (float)devUtils.AsciiHexToU16(t_message,7) / 100; // 0,01%
-      setBmsChargePercentage(BT_DEVICES_COUNT+u8_mDevNr, (uint8_t)floatValue);
+      setBmsChargePercentage(mDataMappingNr, (uint8_t)floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"SOC =%u",(uint8_t)floatValue);
       #endif
@@ -535,7 +535,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_TIME_TO_GO)
     {
       uint16_t u16_tValue = devUtils.AsciiHexToU16(t_message,7); // 1 Minute
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TIME_TO_GO, -1, u16_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TIME_TO_GO, -1, u16_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"TTG =%u",u16_tValue);
       #endif
@@ -543,7 +543,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_CYCLE)
     {
       uint32_t u32_tValue = devUtils.AsciiHexToU32(t_message,7); // 1 Cycle
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_CYCLE, -1, u32_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_CYCLE, -1, u32_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Cycle =%u",u32_tValue);
       #endif
@@ -551,7 +551,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_TOTAL_VOLT_MIN)
     {
       float floatValue = (float)devUtils.AsciiHexToU32(t_message,7) / 100; // 0,01V
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_VOLT_MIN, -1, floatValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_VOLT_MIN, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Total Volt Minimum =%f",floatValue);
       #endif
@@ -559,7 +559,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_TOTAL_VOLT_MAX)
     {
       float floatValue = (float)devUtils.AsciiHexToU32(t_message,7) / 100; // 0,01V
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_VOLT_MAX, -1, floatValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_VOLT_MAX, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Total Volt Maximum =%f",floatValue);
       #endif
@@ -567,7 +567,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_TIME_SINCE_FULL)
     {
       uint32_t u32_tValue = devUtils.AsciiHexToU32(t_message,7); // 1 Seconds
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TIME_SINCE_FULL, -1, u32_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TIME_SINCE_FULL, -1, u32_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Second since last full =%u",u32_tValue);
       #endif
@@ -575,7 +575,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_SOC_SYNC_COUNT)
     {
       uint32_t u32_tValue = devUtils.AsciiHexToU32(t_message,7); // 1 Seconds
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_SOC_SYNC_COUNT, -1, u32_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr+u8_mDevNr, MQTT_TOPIC2_SOC_SYNC_COUNT, -1, u32_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Number of automatic synchronizations =%u",u32_tValue);
       #endif
@@ -583,7 +583,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_VOLT_MIN_COUNT)
     {
       uint32_t u32_tValue = devUtils.AsciiHexToU32(t_message,7); // 1 Seconds
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_VOLT_MIN_COUNT, -1, u32_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_VOLT_MIN_COUNT, -1, u32_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Number of Low Voltage Alarms =%u",u32_tValue);
       #endif
@@ -591,7 +591,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_TOTAL_VOLT_MAX_COUNT)
     {
       uint32_t u32_tValue = devUtils.AsciiHexToU32(t_message,7); // 1 Seconds
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_TOTAL_VOLT_MAX_COUNT, -1, u32_tValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_TOTAL_VOLT_MAX_COUNT, -1, u32_tValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Number of High Voltage Alarms =%u",u32_tValue);
       #endif
@@ -599,7 +599,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_AMOUNT_DCH_ENERGY)
     {
       float floatValue = (float)devUtils.AsciiHexToU32(t_message,7) / 100; // 1 0,01kWh
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_AMOUNT_DCH_ENERGY, -1, floatValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MMQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_AMOUNT_DCH_ENERGY, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Amount of discharged energy =%f",floatValue);
       #endif
@@ -607,7 +607,7 @@ static void parseMessage(deviceUtils::DeviceUtils &devUtils, uint8_t * t_message
     else if(Smartshunt_ID==smartshunt_id_AMOUNT_CH_ENERGY)
     {
       float floatValue = (float)devUtils.AsciiHexToU32(t_message,7) / 100; // 1 0,01kWh
-      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT+u8_mDevNr, MQTT_TOPIC2_AMOUNT_CH_ENERGY, -1, floatValue);
+      if(mDevData->bo_sendMqttMsg) mqttPublish(MQTT_TOPIC_DATA_DEVICE, mDataMappingNr, MQTT_TOPIC2_AMOUNT_CH_ENERGY, -1, floatValue);
       #ifdef SMARTSHUNT_DEBUG
         BSC_LOGI(TAG,"Amount of discharged energy =%f",floatValue);
       #endif

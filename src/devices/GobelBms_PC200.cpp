@@ -91,7 +91,7 @@ static Stream *mPort;
 static uint8_t u8_mDevNr, u8_mTxEnRS485pin, u8_mCountOfPacks;
 
 //
-static void getDataFromBms(uint8_t address, uint8_t function);
+static void getDataFromBms(BscSerial *bscSerial, uint8_t address, uint8_t function);
 static bool recvAnswer(uint8_t *t_outMessage);
 static void parseMessage(uint8_t *t_message, uint8_t address);
 static void parseMessage_Alarms(uint8_t *t_message, uint8_t address);
@@ -104,7 +104,7 @@ static uint16_t lCrc(const uint16_t len);
 static bool checkCrc(uint8_t *recvMsg, uint8_t u8_lRecvBytesCnt);
 static uint16_t calcCrc(uint8_t *data, const uint16_t i16_lLen);
 
-static void (*callbackSetTxRxEn)(uint8_t, uint8_t) = NULL;
+
 static serialDevData_s *mDevData;
 
 static void BSC_Dump_MSGD(const char * tag, const char * txt, const uint8_t* ptr, const size_t len)
@@ -127,42 +127,40 @@ static void BSC_Dump_MSGD(const char * tag, const char * txt, const uint8_t* ptr
   BSC_LOGD(tag, "%s%i: %s", txt, len, recvBytes.c_str());
 }
 
-bool GobelBmsPC200_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uint8_t, uint8_t), serialDevData_s *devData)
+bool GobelBmsPC200_readBmsData(BscSerial *bscSerial, Stream *port, uint8_t devNr, serialDevData_s *devData)
 {
   bool ret = true;
   mDevData=devData;
   mPort = port;
   u8_mDevNr = devNr;
-  callbackSetTxRxEn = callback;
-  u8_mCountOfPacks = devData->u8_NumberOfDevices;
   uint8_t response[GOBELBMS_MAX_ANSWER_LEN];
 
-  uint8_t u8_lGobelAdr = devData->u8_deviceNr;
-  uint8_t u8_lGobelAdrBmsData = devData->u8_BmsDataAdr;
-  if(u8_mCountOfPacks > 1) u8_lGobelAdr += 1;
-  
+  uint8_t u8_lGobelAdr = devData->bmsAdresse;
+  uint8_t u8_lGobelAdrBmsData = devData->dataMappingNr;
+
+
   #ifdef GOBELPC200_DEBUG
-  BSC_LOGI(TAG, "GobelBms_readBmsData() devNr=%i, firstAdr=%i, CountOfPacks=%i, Packs=%i", devNr, u8_lGobelAdr, u8_mCountOfPacks, devData->u8_NumberOfDevices);
+  BSC_LOGI(TAG, "GobelBms_readBmsData() devNr=%i, firstAdr=%i, CountOfPacks=%i", devNr, u8_lGobelAdr, u8_mCountOfPacks);
   #endif
 
   #ifdef GOBELPC200_DEBUG
   BSC_LOGI(TAG, "read data from pack %i", u8_lGobelAdr);
   #endif
-  getDataFromBms(u8_lGobelAdr, 0x42);
+  getDataFromBms(bscSerial, u8_lGobelAdr, 0x42);
   if (recvAnswer(response))
   {
     parseMessage(response, u8_lGobelAdrBmsData);
 
     // mqtt
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + u8_lGobelAdrBmsData, MQTT_TOPIC2_TOTAL_VOLTAGE, -1, getBmsTotalVoltage(BT_DEVICES_COUNT + u8_lGobelAdrBmsData));
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + u8_lGobelAdrBmsData, MQTT_TOPIC2_TOTAL_CURRENT, -1, getBmsTotalCurrent(BT_DEVICES_COUNT + u8_lGobelAdrBmsData));
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, u8_lGobelAdrBmsData, MQTT_TOPIC2_TOTAL_VOLTAGE, -1, getBmsTotalVoltage(u8_lGobelAdrBmsData));
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, u8_lGobelAdrBmsData, MQTT_TOPIC2_TOTAL_CURRENT, -1, getBmsTotalCurrent(u8_lGobelAdrBmsData));
   }
   else ret = false;
   
   if (ret == true)
   {
     vTaskDelay(pdMS_TO_TICKS(25));
-    getDataFromBms(u8_lGobelAdr, 0x44); // Alarms
+    getDataFromBms(bscSerial, u8_lGobelAdr, 0x44); // Alarms
     if (recvAnswer(response))
     {
       parseMessage_Alarms(response, u8_lGobelAdrBmsData);
@@ -170,13 +168,12 @@ bool GobelBmsPC200_readBmsData(Stream *port, uint8_t devNr, void (*callback)(uin
     else ret = false;
   }
 
-  if(devNr >= 2) callbackSetTxRxEn(u8_mDevNr, serialRxTx_RxTxDisable);
   vTaskDelay(pdMS_TO_TICKS(25));
   return ret;
 }
 
 
-static void getDataFromBms(uint8_t address, uint8_t function)
+static void getDataFromBms(BscSerial *bscSerial, uint8_t address, uint8_t function)
 {
   uint16_t lenid = lCrc(2);
 
@@ -190,13 +187,13 @@ static void getDataFromBms(uint8_t address, uint8_t function)
   u8_lData[3] = function;     // CID2 (0x42)
   u8_lData[4] = (lenid >> 8); // LCHKSUM (0xE0)
   u8_lData[5] = (lenid >> 0); // LENGTH (0x02)
-  u8_lData[6] = address + 1;      // INFO
+  u8_lData[6] = address + 1; //0xFF;         // INFO
 
   convertByteToAsciiHex(&u8_lSendData[1], &u8_lData[0], frame_len);
 
   uint16_t crc = calcCrc(&u8_lSendData[1], frame_len * 2);
 #ifdef GOBELPC200_DEBUG
-  BSC_LOGD(TAG, "crc=%i", crc);
+  BSC_LOGD(TAG, "adr=%i, crc=%i", address, crc);
 #endif
   u8_lData[7] = (crc >> 8); // CHKSUM (0xFD)
   u8_lData[8] = (crc >> 0); // CHKSUM (0x37)
@@ -211,11 +208,7 @@ static void getDataFromBms(uint8_t address, uint8_t function)
 #endif
 
   // TX
-  callbackSetTxRxEn(u8_mDevNr, serialRxTx_TxEn);
-  usleep(20);
-  mPort->write(u8_lSendData, 20);
-  mPort->flush();
-  callbackSetTxRxEn(u8_mDevNr, serialRxTx_RxEn);
+  bscSerial->sendSerialData(mPort, u8_mDevNr, u8_lSendData, 20);
 }
 
 
@@ -378,7 +371,7 @@ Byte | Data
   for (uint8_t i = 0; i < u8_lNumOfCells; i++)
   {
     u16_lZellVoltage = get16bitFromMsg(u8_lMsgoffset);
-    setBmsCellVoltage(BT_DEVICES_COUNT + address, i, (float)(u16_lZellVoltage));
+    setBmsCellVoltage(address, i, (float)(u16_lZellVoltage));
     u8_lMsgoffset += 2;
 
     u16_lCellSum += u16_lZellVoltage;
@@ -399,12 +392,12 @@ Byte | Data
     u16_lZellDifferenceVoltage = u16_lCellHigh - u16_lCellLow;
   }
 
-  setBmsMaxCellVoltage(BT_DEVICES_COUNT + address, u16_lCellHigh);
-  setBmsMinCellVoltage(BT_DEVICES_COUNT + address, u16_lCellLow);
-  setBmsMaxVoltageCellNumber(BT_DEVICES_COUNT + address, u8_lZellNumberMaxVoltage);
-  setBmsMinVoltageCellNumber(BT_DEVICES_COUNT + address, u8_lZellNumberMinVoltage);
-  setBmsAvgVoltage(BT_DEVICES_COUNT + address, (float)(u16_lCellSum / u8_lNumOfCells));
-  setBmsMaxCellDifferenceVoltage(BT_DEVICES_COUNT + address, (float)(u16_lZellDifferenceVoltage));
+  setBmsMaxCellVoltage(address, u16_lCellHigh);
+  setBmsMinCellVoltage(address, u16_lCellLow);
+  setBmsMaxVoltageCellNumber(address, u8_lZellNumberMaxVoltage);
+  setBmsMinVoltageCellNumber(address, u8_lZellNumberMinVoltage);
+  setBmsAvgVoltage(address, (float)(u16_lCellSum / u8_lNumOfCells));
+  setBmsMaxCellDifferenceVoltage(address, (float)(u16_lZellDifferenceVoltage));
 
   // 41 | 30 36（temperature number N，06H，has 6 temperatures
   uint8_t u8_lCntTempSensors = convertAsciiHexToByte(t_message, u8_lMsgoffset++);
@@ -418,26 +411,24 @@ Byte | Data
   // 48 | 30 42 42 36（forth temperature: 0BB6H，that’s 2998，26.8℃）
   // 50 | 30 42 42 33（fifth temperature （MOS）: 0BB3H，that’s 2995，26.5℃）
   // 52 | 30 42 42 44（sixth temperature（environment）: 0BBDH，that’s 2994，27.5℃）
-  float fl_lBmsTemps[3]; // Hier werden die ketzten drei Temperaturen zwischengespeichert
+  float fl_lBmsTemps[3]; // Hier werden die letzten drei Temperaturen zwischengespeichert
   for (uint8_t i = 0; i < u8_lCntTempSensors; i++)
   {
     fl_lBmsTemps[2] = (float)(get16bitFromMsg(u8_lMsgoffset) - 0xAAB) * 0.1;
     u8_lMsgoffset += 2;
     if (i < 3)
-      setBmsTempature(BT_DEVICES_COUNT + address, i, fl_lBmsTemps[2]);
+      setBmsTempature(address, i, fl_lBmsTemps[2]);
     else if (i >= 3 && i < 5)
       fl_lBmsTemps[i - 3] = fl_lBmsTemps[2];
   }
 
   // 54 | 30 30 30 30（PACK current，0000H，unit:10mA，range: -327.68A-+327.67A）
-  //float f_lTotalCurrent = (float)((int16_t)get16bitFromMsg(u8_lMsgoffset)) * 0.01f;
-  //setBmsTotalCurrent(BT_DEVICES_COUNT + address, f_lTotalCurrent);
-  setBmsTotalCurrent_int(BT_DEVICES_COUNT + address, (int16_t)get16bitFromMsg(u8_lMsgoffset));
+  setBmsTotalCurrent_int(address, ((int16_t)get16bitFromMsg(u8_lMsgoffset)*10));
   u8_lMsgoffset += 2;
 
   // 56 | 44 31 35 35（PACK total voltage，D155H , that’s 53.589V）
   float f_lTotalVoltage = (float)get16bitFromMsg(u8_lMsgoffset) * 0.001f;
-  setBmsTotalVoltage(BT_DEVICES_COUNT + address, f_lTotalVoltage);
+  setBmsTotalVoltage(address, f_lTotalVoltage);
   u8_lMsgoffset += 2;
 
   // 58 | 31 32 38 45（PACK remain capacity，128EH, that’s 47.50AH）
@@ -449,7 +440,10 @@ Byte | Data
   uint16_t u16_lFullCapacity = get16bitFromMsg(u8_lMsgoffset);
   u8_lMsgoffset += 2;
 
-  setBmsChargePercentage(BT_DEVICES_COUNT + address, (float)((float)u16_lBalanceCapacity / (float)u16_lFullCapacity * 100.0f));
+  setBmsChargePercentage(address, (float)((float)u16_lBalanceCapacity / (float)u16_lFullCapacity * 100.0f));
+  #ifdef GOBELPC200_DEBUG
+  BSC_LOGD(TAG, "Capacity: %i %i, soc=%i", u16_lBalanceCapacity, u16_lFullCapacity, getBmsChargePercentage(address));
+  #endif
   u16_lBalanceCapacity /= 100;
   u16_lFullCapacity /= 100;
 
@@ -462,20 +456,20 @@ Byte | Data
   if (mDevData->bo_sendMqttMsg)
   {
     // Nachrichten senden
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_TEMPERATURE, 3, fl_lBmsTemps[0]);
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_TEMPERATURE, 4, fl_lBmsTemps[1]);
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_TEMPERATURE, 5, fl_lBmsTemps[2]);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_TEMPERATURE, 3, fl_lBmsTemps[0]);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_TEMPERATURE, 4, fl_lBmsTemps[1]);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_TEMPERATURE, 5, fl_lBmsTemps[2]);
 
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_BALANCE_CAPACITY, -1, u16_lBalanceCapacity);
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_FULL_CAPACITY, -1, u16_lFullCapacity);
-    mqttPublish(MQTT_TOPIC_BMS_BT, BT_DEVICES_COUNT + address, MQTT_TOPIC2_CYCLE, -1, u16_lCycle);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_BALANCE_CAPACITY, -1, u16_lBalanceCapacity);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_FULL_CAPACITY, -1, u16_lFullCapacity);
+    mqttPublish(MQTT_TOPIC_DATA_DEVICE, address, MQTT_TOPIC2_CYCLE, -1, u16_lCycle);
   }
 }
 
 static void parseMessage_Alarms(uint8_t *t_message, uint8_t address)
 {
 #ifdef GOBELPC200_DEBUG
-  BSC_LOGI(TAG, "parseMessage: serialDev=%i", address);
+  BSC_LOGI(TAG, "parseMessage_Alarms: serialDev=%i", address);
 #endif
 /*
 
@@ -601,10 +595,12 @@ Char A.25 Warn state2 explanation
 | 0 | above charge temperature warn       | 1: warn 0: normal
 */
 
-  uint8_t u8_lMsgoffset = 0;
+  //uint8_t u8_lMsgoffset = 0;
+  uint8_t u8_value = 0;
   uint32_t u32_alarm = 0;
   boolean bo_lValue = false;
 
+#if 0
   uint8_t u8_lNumOfCells = convertAsciiHexToByte(t_message, 8); // Number of cells
 #ifdef GOBELPC200_DEBUG
   BSC_LOGD(TAG, "Number of cells: %d", u8_lNumOfCells);
@@ -691,6 +687,24 @@ Char A.25 Warn state2 explanation
       u32_alarm |= BMS_ERR_STATUS_DSG_UTP;
 
   setBmsErrors(BT_DEVICES_COUNT + address, u32_alarm);
+  #endif
+
+
+  // FET state
+  uint8_t FETstate = convertAsciiHexToByte(t_message, 37);
+  if(isBitSet(FETstate,1)) setBmsStateFETsCharge(address, true);
+  else setBmsStateFETsCharge(address, false); 
+  
+  if(isBitSet(FETstate,2)) setBmsStateFETsDischarge(address, true);
+  else setBmsStateFETsDischarge(address, false); 
+
+
+  u8_value = convertAsciiHexToByte(t_message, 38);
+
+  if(isBitSet(u8_value, 4)) u32_alarm |= BMS_ERR_STATUS_CELL_OVP;
+
+
+
 }
 
 uint8_t convertAsciiHexToByte(char a, char b)

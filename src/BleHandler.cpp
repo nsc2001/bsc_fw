@@ -15,6 +15,7 @@
 static const char *TAG = "BLE_HANDLER";
 
 bool bleNeeyBalancerConnect(uint8_t deviceNr);
+uint8_t getDataDeviceNrFromBtDevice(uint8_t btDeviceNr);
 
 static bleDevice bleDevices[BT_DEVICES_COUNT];
 NimBLEScan* pBLEScan;
@@ -59,12 +60,12 @@ class ClientCallbacks : public NimBLEClientCallbacks
           case ID_BT_DEVICE_NEEY4A:
           case ID_BT_DEVICE_NEEY8A:
             // interval 1,25ms; timeout 10ms
-            pClient->updateConnParams(BT_NEEY_POLL_INTERVAL,BT_NEEY_POLL_INTERVAL,0,300); //timeout 1500
-            //pClient->updateConnParams(50,50,0,300); //timeout 1500
+            //pClient->updateConnParams(BT_NEEY_POLL_INTERVAL,BT_NEEY_POLL_INTERVAL,0,300); //timeout 1500
+            pClient->updateConnParams(20,20,0,60);
             break;
           case ID_BT_DEVICE_JKBMS_JK02:
           case ID_BT_DEVICE_JKBMS_JK02_32S:
-            pClient->updateConnParams(120,120,5,1500);
+            pClient->updateConnParams(20,20,0,60);
             jkBmsBtDevInit(i);
             break;
         }
@@ -72,7 +73,7 @@ class ClientCallbacks : public NimBLEClientCallbacks
         bleDevices[i].balancerOn=e_BalancerWaitForCmd;
         bleDevices[i].isConnect = true;
         bleDevices[i].doConnect = btDoConnectionWaitStart;
-        setBmsLastDataMillis(i,millis());
+        setBmsLastDataMillis(getDataDeviceNrFromBtDevice(i), millis());
       }
     }
 
@@ -174,7 +175,18 @@ class MyAdvertisedDeviceCallbacks: public NimBLEAdvertisedDeviceCallbacks
 
 
 
-
+uint8_t getDataDeviceNrFromBtDevice(uint8_t btDeviceNr)
+{
+  for(uint8_t n = 0; n < MUBER_OF_DATA_DEVICES; n++)
+  {
+    uint8_t dataDeviceSchnittstelle = (uint8_t)WebSettings::getInt(ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE,n,DT_ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE);
+    if(dataDeviceSchnittstelle == btDeviceNr)
+    {
+      return n;
+    }
+  }
+  return 0;
+}
 
 
 // Notification / Indication receiving handler callback
@@ -183,12 +195,20 @@ void notifyCB_NEEY(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* p
   std::string notifyMacAdr = pRemoteCharacteristic->getRemoteService()->getClient()->getPeerAddress().toString();
   //BSC_LOGI(TAG,"neey_cb mac=%s, len=%i",notifyMacAdr.c_str(),length);
 
-  for(uint8_t i=0;i<BT_DEVICES_COUNT;i++)
+  for(uint8_t i = 0; i < BT_DEVICES_COUNT; i++)
   {
     if(bleDevices[i].macAdr.equals(notifyMacAdr.c_str()))
     {
-      //Daten kopieren
-      NeeyBalancer::neeyBalancerCopyData(i, pData, length);
+      for(uint8_t n = 0; n < MUBER_OF_DATA_DEVICES; n++)
+      {
+        uint8_t dataDeviceSchnittstelle = (uint8_t)WebSettings::getInt(ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE,n,DT_ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE);
+        if(dataDeviceSchnittstelle == i)
+        {
+          //Daten kopieren
+          NeeyBalancer::neeyBalancerCopyData(n, pData, length);
+          return;
+        }
+      }
     }
   }
 }
@@ -220,7 +240,16 @@ void notifyCB_JKBMS(NimBLERemoteCharacteristic* pRemoteCharacteristic, uint8_t* 
           break;
       }
 
-      jkBmsBtCopyData(i, u8_frameVersion, pData, length);
+      for(uint8_t n = 0; n < MUBER_OF_DATA_DEVICES; n++)
+      {
+        uint8_t dataDeviceSchnittstelle = (uint8_t)WebSettings::getInt(ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE,n,DT_ID_PARAM_DEVICE_MAPPING_SCHNITTSTELLE);
+        if(dataDeviceSchnittstelle == i)
+        {
+          //Daten kopieren
+          jkBmsBtCopyData(i, u8_frameVersion, pData, length);
+          return;
+        }
+      }
 
       bleDevices[i].sendDataStep=0;
     }
@@ -523,7 +552,7 @@ void BleHandler::init()
     bleDevices[i].isConnect = false;
     bleDevices[i].macAdr = "";
     bleDevices[i].deviceTyp = ID_BT_DEVICE_NB;
-    setBmsLastDataMillis(i,0);
+    setBmsLastDataMillis(getDataDeviceNrFromBtDevice(i),0);
     bleDevices[i].sendDataStep=0;
     bleDevices[i].balancerOn=e_BalancerWaitForCmd;
 
@@ -841,7 +870,7 @@ bool BleHandler::handleConnectionToDevices()
                 uint8_t u8_lBtDevType, u8_devDeativateTriggerNr;
                 bool bo_devDeactivateTrigger=false;
 
-                if((millis()-getBmsLastDataMillis(i))>5000)
+                if((millis()-getBmsLastDataMillis(getDataDeviceNrFromBtDevice(i))) > 5000)
                 {
                   u8_lBtDevType = webSettings.getInt(ID_PARAM_SS_BTDEV,i,DT_ID_PARAM_SS_BTDEV);
                   u8_devDeativateTriggerNr = webSettings.getInt(ID_PARAM_BTDEV_DEACTIVATE,i,DT_ID_PARAM_BTDEV_DEACTIVATE);
